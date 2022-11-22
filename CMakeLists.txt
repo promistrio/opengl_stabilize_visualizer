@@ -13,8 +13,12 @@ pkg_check_modules(LIBAV REQUIRED IMPORTED_TARGET
     libavutil
 )
 
+add_subdirectory(modules/ffmpeg-cpp)
+
 #OpenCV
 find_package( OpenCV REQUIRED )
-include_directories( ${OpenCV_INCLUDE_DIRS} )
+include_directories( ${OpenCV_INCLUDE_DIRS}
+     "modules/ffmpeg-cpp/sources"   
+)
 add_executable( CaptureAndStabilize main.cpp )
-target_link_libraries( CaptureAndStabilize ${OpenCV_LIBS} PkgConfig::LIBAV )
+target_link_libraries( CaptureAndStabilize ${OpenCV_LIBS} PkgConfig::LIBAV ffmpeg-cpp)

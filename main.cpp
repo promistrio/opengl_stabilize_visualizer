@@ -6,18 +6,143 @@
 #include <iostream>
 #include <vector>
 // FFmpeg
-extern "C" {
+extern "C"
+{
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
 #include <libavutil/avutil.h>
 #include <libavutil/pixdesc.h>
 #include <libswscale/swscale.h>
+#include <libavformat/avio.h>
+#include <libavutil/file.h>
 }
 // OpenCV
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 
 
+#include <iostream>
+
+#include "ffmpegcpp.h"
+
+using namespace std;
+using namespace ffmpegcpp;
+
+class PGMFileSink : public VideoFrameSink, public FrameWriter
+{
+public:
+
+	PGMFileSink()
+	{
+	}
+
+	FrameSinkStream* CreateStream()
+	{
+		stream = new FrameSinkStream(this, 0);
+		return stream;
+	}
+
+	virtual void WriteFrame(int /* streamIndex */, AVFrame* frame, StreamData*  /* streamData */)
+	{
+		++frameNumber;
+		printf("saving frame %3d\n", frameNumber);
+		fflush(stdout);
+
+
+		// write the first channel's color data to a PGM file.
+		// This raw image file can be opened with most image editing programs.
+		snprintf(fileNameBuffer, sizeof(fileNameBuffer), "frames/pgm-%d.pgm", frameNumber);
+		//pgm_save(frame->data[0], frame->linesize[0],
+		//	frame->width, frame->height, fileNameBuffer);
+
+        SwsContext* swsctx = sws_getCachedContext(
+        nullptr, frame->width, frame->height, AV_PIX_FMT_BGR32,
+        frame->width, frame->height, AV_PIX_FMT_GRAY8, SWS_BICUBIC, nullptr, nullptr, nullptr);
+
+        if (!swsctx) {
+            std::cerr << "fail to sws_getCachedContext";
+            exit(-1);
+        }
+
+        //sws_scale(swsctx, frame->data, frame->linesize, 0, frame->height, frame->data, frame->linesize);
+
+        cv::Mat image(frame->height, frame->width, CV_8UC1, frame->data[0],0);
+        cv::imshow("press ESC to exit", image);
+        if (cv::waitKey(1) == 0x1b){
+            exit(0);
+        }
+	}
+
+	void pgm_save(unsigned char *buf, int wrap, int xsize, int ysize,
+		char *filename)
+	{
+		FILE *f;
+		int i;
+
+		f = fopen(filename, "w");
+		fprintf(f, "P5\n%d %d\n%d\n", xsize, ysize, 255);
+		for (i = 0; i < ysize; i++)
+			fwrite(buf + i * wrap, 1, xsize, f);
+		fclose(f);
+	}
+
+	virtual void Close(int /* streamIndex */)
+	{
+		delete stream;
+	}
+
+	virtual bool IsPrimed()
+	{
+		// Return whether we have all information we need to start writing out data.
+		// Since we don't really need any data in this use case, we are always ready.
+		// A container might only be primed once it received at least one frame from each source
+		// it will be muxing together (see Muxer.cpp for how this would work then).
+		return true;
+	}
+
+private:
+	char fileNameBuffer[1024];
+	int frameNumber = 0;
+	FrameSinkStream* stream;
+
+};
+
+int main()
+{
+	// This example will decode a video stream from a container and output it as raw image data, one image per frame.
+	try
+	{
+		// Load this container file so we can extract video from it.
+		Demuxer* demuxer = new Demuxer("/media/user/Common/DEV/ffmpeg_opencv/build/dump.bin");//../../samples/big_buck_bunny.mp4
+
+		// Create a file sink that will just output the raw frame data in one PGM file per frame.
+		PGMFileSink* fileSink = new PGMFileSink();
+
+		// tie the file sink to the best video stream in the input container.
+		demuxer->DecodeBestVideoStream(fileSink);
+
+		// Prepare the output pipeline. This will push a small amount of frames to the file sink until it IsPrimed returns true.
+		demuxer->PreparePipeline();
+
+		// Push all the remaining frames through.
+		while (!demuxer->IsDone())
+		{
+			demuxer->Step();
+		}
+
+		// done
+		delete demuxer;
+		delete fileSink;
+	}
+	catch (FFmpegException e)
+	{
+		cerr << "Exception caught!" << endl;
+		throw e;
+	}
+
+	cout << "Decoding complete!" << endl;
+}
+/*
 int main(int argc, char* argv[])
 {
     if (argc < 2) {
@@ -27,8 +152,7 @@ int main(int argc, char* argv[])
     const char* infile = argv[1];
 
     // initialize FFmpeg library
-    av_register_all();
-//  av_log_set_level(AV_LOG_DEBUG);
+    // av_log_set_level(AV_LOG_DEBUG);
     int ret;
 
     // open input file context
@@ -140,4 +264,4 @@ next_packet:
     avcodec_close(vstrm->codec);
     avformat_close_input(&inctx);
     return 0;
-}
+}*/

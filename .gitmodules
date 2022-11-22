@@ -1,0 +1,3 @@
+[submodule "modules/ffmpeg-cpp"]
+	path = modules/ffmpeg-cpp
+	url = https://framagit.org/ericb/ffmpeg-cpp2.git
