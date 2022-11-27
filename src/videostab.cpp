@@ -70,14 +70,21 @@ Mat VideoStab::stabilize(Mat frame_1, Mat frame_2, Mat mask)
     //Estimating the features in frame1 and frame2
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
-    Rect2d crop = Rect2d (300,300,500,500);
-    frame1  = frame1(crop);
-    goodFeaturesToTrack(frame1, features1, 200, 0.01, 30);//, noArray(), 3, false, 0.04);
+    Rect2d cropRect = Rect2d(480, 270, 1920 / 2, 1080 / 2);
+
+
+
+    Mat crp1 = frame1(cropRect);
+    Mat crp2 = frame2(cropRect);
+
+    goodFeaturesToTrack(crp1, features1, 200, 0.01, 30);//, noArray(), 3, false, 0.04);
 
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     std::cout << "goodFeaturesToTrack = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
 
-    calcOpticalFlowPyrLK(frame1, frame2, features1, features2, status, err);
+    calcOpticalFlowPyrLK(crp1, crp2, features1, features2, status, err);
+
+    imshow ("frame1 cropped", crp1);
     
     
 
@@ -85,8 +92,8 @@ Mat VideoStab::stabilize(Mat frame_1, Mat frame_2, Mat mask)
     {
         if (status[i])
         {
-            goodFeatures1.push_back(features1[i]);
-            goodFeatures2.push_back(features2[i]);
+            goodFeatures1.push_back(features1[i] + Point2f(300,300));
+            goodFeatures2.push_back(features2[i] + Point2f(300,300));
         }
     }
 

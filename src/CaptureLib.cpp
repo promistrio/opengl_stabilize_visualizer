@@ -5,10 +5,10 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#include "opencv2/features2d/features2d.hpp"
+#include <opencv2/features2d/features2d.hpp>
 //#include "opencv2/nonfree/nonfree.hpp"
-#include "opencv2/flann/flann.hpp"
-#include "opencv2/calib3d/calib3d.hpp"
+#include <opencv2/flann/flann.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <cmath>
@@ -60,8 +60,7 @@ bool setFrame(Mat new_frame)
     int width = 1920;
     int height = 1080;
     if (!is_init){
-        Rect2d crop = Rect2d (300,300,500,500);
-        InitFrame(new_frame(crop));
+        InitFrame(new_frame);
         is_init = true;
         /*
         mask = cv::Mat(height, width , CV_8UC1,  cv::Scalar(0));
