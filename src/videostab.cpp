@@ -92,8 +92,8 @@ Mat VideoStab::stabilize(Mat frame_1, Mat frame_2, Mat mask)
     {
         if (status[i])
         {
-            goodFeatures1.push_back(features1[i] + Point2f(300,300));
-            goodFeatures2.push_back(features2[i] + Point2f(300,300));
+            goodFeatures1.push_back(features1[i] + Point2f(270,480));
+            goodFeatures2.push_back(features2[i] + Point2f(270,480));
         }
     }
 
