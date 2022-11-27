@@ -17,6 +17,7 @@ extern "C"
 #include <libavutil/file.h>
 }
 // OpenCV
+#include "CaptureLib.h"
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 
@@ -27,6 +28,9 @@ extern "C"
 
 using namespace std;
 using namespace ffmpegcpp;
+
+
+
 
 class PGMFileSink : public VideoFrameSink, public FrameWriter
 {
@@ -44,9 +48,10 @@ public:
 
 	virtual void WriteFrame(int /* streamIndex */, AVFrame* frame, StreamData*  /* streamData */)
 	{
-		++frameNumber;
-		printf("saving frame %3d\n", frameNumber);
-		fflush(stdout);
+        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+		//++frameNumber;
+		//printf("saving frame %3d\n", frameNumber);
+		//fflush(stdout);
 
 
 		// write the first channel's color data to a PGM file.
@@ -58,11 +63,13 @@ public:
 
         //sws_scale(swsctx, frame->data, frame->linesize, 0, frame->height, frame->data, frame->linesize);
 
-        cv::Mat image(frame->height, frame->width, CV_8UC1, frame->data[0],frame->linesize[0]);
-        cv::imshow("press ESC to exit", image);
-        if (cv::waitKey(1) == 0x1b){
-            exit(0);
-        }
+        cv::Mat image(frame->height, frame->width, CV_8UC1, frame->data[0], frame->linesize[0]);
+        //cv::imshow("press ESC to exit", image);
+        setFrame(image);
+
+        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+        std::cout << "Frame duration = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
+
 	}
 
 	void pgm_save(unsigned char *buf, int wrap, int xsize, int ysize,

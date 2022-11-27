@@ -20,5 +20,11 @@ find_package( OpenCV REQUIRED )
 include_directories( ${OpenCV_INCLUDE_DIRS}
      "modules/ffmpeg-cpp/sources"   
 )
-add_executable( CaptureAndStabilize main.cpp )
+add_executable( CaptureAndStabilize 
+                src/main.cpp
+                src/videostab.cpp
+                src/CaptureLib.cpp
+                )
+
+                
 target_link_libraries( CaptureAndStabilize ${OpenCV_LIBS} PkgConfig::LIBAV ffmpeg-cpp)
