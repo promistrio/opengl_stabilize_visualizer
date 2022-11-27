@@ -51,22 +51,14 @@ public:
 
 		// write the first channel's color data to a PGM file.
 		// This raw image file can be opened with most image editing programs.
-		snprintf(fileNameBuffer, sizeof(fileNameBuffer), "frames/pgm-%d.pgm", frameNumber);
+		//snprintf(fileNameBuffer, sizeof(fileNameBuffer), "frames/pgm-%d.pgm", frameNumber);
 		//pgm_save(frame->data[0], frame->linesize[0],
 		//	frame->width, frame->height, fileNameBuffer);
 
-        SwsContext* swsctx = sws_getCachedContext(
-        nullptr, frame->width, frame->height, AV_PIX_FMT_BGR32,
-        frame->width, frame->height, AV_PIX_FMT_GRAY8, SWS_BICUBIC, nullptr, nullptr, nullptr);
-
-        if (!swsctx) {
-            std::cerr << "fail to sws_getCachedContext";
-            exit(-1);
-        }
 
         //sws_scale(swsctx, frame->data, frame->linesize, 0, frame->height, frame->data, frame->linesize);
 
-        cv::Mat image(frame->height, frame->width, CV_8UC1, frame->data[0],0);
+        cv::Mat image(frame->height, frame->width, CV_8UC1, frame->data[0],frame->linesize[0]);
         cv::imshow("press ESC to exit", image);
         if (cv::waitKey(1) == 0x1b){
             exit(0);
@@ -113,7 +105,7 @@ int main()
 	try
 	{
 		// Load this container file so we can extract video from it.
-		Demuxer* demuxer = new Demuxer("/media/user/Common/DEV/ffmpeg_opencv/build/dump.bin");//../../samples/big_buck_bunny.mp4
+		Demuxer* demuxer = new Demuxer("dump.bin");//../../samples/big_buck_bunny.mp4
 
 		// Create a file sink that will just output the raw frame data in one PGM file per frame.
 		PGMFileSink* fileSink = new PGMFileSink();
