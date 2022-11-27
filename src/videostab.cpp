@@ -1,15 +1,14 @@
 #include "videostab.h"
 #include <cmath>
 
-// Parameters for Kalman Filter
+//Parameters for Kalman Filter
 #define Q1 0.004
 #define R1 0.5
 
-// To see the results of before and after stabilization simultaneously
+//To see the results of before and after stabilization simultaneously
 #define test 0
 
-const int MAX_FEATURES = 50;
-const float GOOD_MATCH_PERCENT = 0.15f;
+
 
 VideoStab::VideoStab()
 {
@@ -47,10 +46,11 @@ VideoStab::VideoStab()
     thetha = 0;
     transX = 0;
     transY = 0;
+
 }
 
-// The main stabilization function
-Mat VideoStab::stabilize(Mat frame_1, Mat frame_2)
+//The main stabilization function
+Mat VideoStab::stabilize(Mat frame_1, Mat frame_2, Mat mask)
 {
     /*cvtColor(frame_1, frame1, COLOR_BGR2GRAY);
     cvtColor(frame_2, frame2, COLOR_BGR2GRAY);*/
@@ -59,79 +59,42 @@ Mat VideoStab::stabilize(Mat frame_1, Mat frame_2)
     frame2 = frame_2;
 
     int vert_border = HORIZONTAL_BORDER_CROP * frame_1.rows / frame_1.cols;
-    std::chrono::steady_clock::time_point begin;
-    std::chrono::steady_clock::time_point end;
 
-    /*
-        vector <Point2f> features1, features2;
-        vector <Point2f> goodFeatures1, goodFeatures2;
-        vector <uchar> status;
-        vector <float> err;
+    vector <Point2f> features1, features2;
+    vector <Point2f> goodFeatures1, goodFeatures2;
+    vector <uchar> status;
+    vector <float> err;
 
-
-
-        //Estimating the features in frame1 and frame2
-        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-        goodFeaturesToTrack(frame1, features1, 200, 0.1, 30);
-        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-        std::cout << "goodFeaturesToTrack = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
-
-        begin = std::chrono::steady_clock::now();
-        calcOpticalFlowPyrLK(frame1, frame2, features1, features2, status, err);
-        end = std::chrono::steady_clock::now();
-        std::cout << "calcOpticalFlowPyrLK = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
-     
-        for (size_t i = 0; i < status.size(); i++)
-        {
-            if (status[i])
-            {
-                goodFeatures1.push_back(features1[i]);
-                goodFeatures2.push_back(features2[i]);
-            }
-        }
-
-        */
-
-    std::vector<KeyPoint> keypoints1, keypoints2;
-    Mat descriptors1, descriptors2;
-
-    // Detect ORB features and compute descriptors.
-    begin = std::chrono::steady_clock::now();
-    Ptr<Feature2D> orb = ORB::create(MAX_FEATURES);
-    end = std::chrono::steady_clock::now();
-    std::cout << "ORB::create = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
-    
-    orb->detectAndCompute(frame1, Mat(), keypoints1, descriptors1);
-    orb->detectAndCompute(frame2, Mat(), keypoints2, descriptors2);
     
 
-    // Match features.
-    std::vector<DMatch> matches;
-    Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create("BruteForce-Hamming");
-    matcher->match(descriptors1, descriptors2, matches, Mat());
+    //Estimating the features in frame1 and frame2
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
-    // Sort matches by score
-    std::sort(matches.begin(), matches.end());
+    Rect2d crop = Rect2d (300,300,500,500);
+    frame1  = frame1(crop);
+    goodFeaturesToTrack(frame1, features1, 200, 0.01, 30);//, noArray(), 3, false, 0.04);
 
-    // Remove not so good matches
-    const int numGoodMatches = matches.size() * GOOD_MATCH_PERCENT;
-    matches.erase(matches.begin() + numGoodMatches, matches.end());
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::cout << "goodFeaturesToTrack = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
 
-    std::vector<Point2f> points1, points2;
- 
-    for( size_t i = 0; i < matches.size(); i++ )
+    calcOpticalFlowPyrLK(frame1, frame2, features1, features2, status, err);
+    
+    
+
+    for (size_t i = 0; i < status.size(); i++)
     {
-        points1.push_back( keypoints1[ matches[i].queryIdx ].pt );
-        points2.push_back( keypoints2[ matches[i].trainIdx ].pt );
+        if (status[i])
+        {
+            goodFeatures1.push_back(features1[i]);
+            goodFeatures2.push_back(features2[i]);
+        }
     }
 
-    
+    //All the parameters scale, angle, and translation are stored in affine
+    affine = cv::estimateAffine2D(goodFeatures1, goodFeatures2);
 
-    // All the parameters scale, angle, and translation are stored in affine
-    affine = cv::estimateAffine2D(points1, points2);
-
-    // cout<<affine;
-    // flush(cout);
+    //cout<<affine;
+    //flush(cout);
 
     dx = affine.at<double>(0, 2);
     dy = affine.at<double>(1, 2);
@@ -148,7 +111,8 @@ Mat VideoStab::stabilize(Mat frame_1, Mat frame_2)
     sum_scaleX += ds_x;
     sum_scaleY += ds_y;
 
-    // Don't calculate the predicted state of Kalman Filter on 1st iteration
+
+    //Don't calculate the predicted state of Kalman Filter on 1st iteration
     if (k == 1)
     {
         k++;
@@ -156,6 +120,7 @@ Mat VideoStab::stabilize(Mat frame_1, Mat frame_2)
     else
     {
         Kalman_Filter(&scaleX, &scaleY, &thetha, &transX, &transY);
+
     }
 
     diff_scaleX = scaleX - sum_scaleX;
@@ -170,7 +135,7 @@ Mat VideoStab::stabilize(Mat frame_1, Mat frame_2)
     dy = dy + diff_transY;
     da = da + diff_thetha;
 
-    // Creating the smoothed parameters matrix
+    //Creating the smoothed parameters matrix
     smoothedMat.at<double>(0, 0) = sx * cos(da);
     smoothedMat.at<double>(0, 1) = sx * -sin(da);
     smoothedMat.at<double>(1, 0) = sy * sin(da);
@@ -179,20 +144,22 @@ Mat VideoStab::stabilize(Mat frame_1, Mat frame_2)
     smoothedMat.at<double>(0, 2) = dx;
     smoothedMat.at<double>(1, 2) = dy;
 
-    // Uncomment if you want to see smoothed values
-    // cout<<smoothedMat;
-    // flush(cout);
+    //Uncomment if you want to see smoothed values
+    //cout<<smoothedMat;
+    //flush(cout);
 
-    // Warp the new frame using the smoothed parameters
+    //Warp the new frame using the smoothed parameters
 
+    
+    
     warpAffine(frame_1, smoothedFrame, smoothedMat, frame_2.size());
 
-    // Crop the smoothed frame a little to eliminate black region due to Kalman Filter
-    // smoothedFrame = smoothedFrame(Range(vert_border, smoothedFrame.rows - vert_border), Range(HORIZONTAL_BORDER_CROP, smoothedFrame.cols - HORIZONTAL_BORDER_CROP));
+    //Crop the smoothed frame a little to eliminate black region due to Kalman Filter
+    //smoothedFrame = smoothedFrame(Range(vert_border, smoothedFrame.rows - vert_border), Range(HORIZONTAL_BORDER_CROP, smoothedFrame.cols - HORIZONTAL_BORDER_CROP));
 
-    // resize(smoothedFrame, smoothedFrame, frame_2.size());
+    //resize(smoothedFrame, smoothedFrame, frame_2.size());
 
-    // Change the value of test if you want to see both unstabilized and stabilized video
+    //Change the value of test if you want to see both unstabilized and stabilized video
     /*if (test)
     {
         Mat canvas = Mat::zeros(frame_2.rows, frame_2.cols * 2 + 10, frame_2.type());
@@ -209,10 +176,12 @@ Mat VideoStab::stabilize(Mat frame_1, Mat frame_2)
     }*/
 
     return smoothedFrame;
+
 }
 
-// Kalman Filter implementation
-void VideoStab::Kalman_Filter(double *scaleX, double *scaleY, double *thetha, double *transX, double *transY)
+
+//Kalman Filter implementation
+void VideoStab::Kalman_Filter(double* scaleX, double* scaleY, double* thetha, double* transX, double* transY)
 {
     double frame_1_scaleX = *scaleX;
     double frame_1_scaleY = *scaleY;

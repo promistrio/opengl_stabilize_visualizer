@@ -47,6 +47,8 @@ Mat frame_2;
 Mat frame_1;
 bool is_init = false;
 
+Mat mask;
+
 
 
 bool InitFrame(cv::Mat _frame1){
@@ -55,17 +57,38 @@ bool InitFrame(cv::Mat _frame1){
 
 bool setFrame(Mat new_frame)
 {
+    int width = 1920;
+    int height = 1080;
     if (!is_init){
-        InitFrame(new_frame);
+        Rect2d crop = Rect2d (300,300,500,500);
+        InitFrame(new_frame(crop));
         is_init = true;
+        /*
+        mask = cv::Mat(height, width , CV_8UC1,  cv::Scalar(0));
+
+        int padding_row = 500;
+        int padding_col = 300;
+        
+        for (int row = padding_row; row < height - padding_row; row ++){
+            for (int col = padding_col; col < width - padding_col; col++){
+                //std::cout << "row " << row << " col " << col << std::endl;
+                mask.at<uchar>(row, col, 1) = 255;
+            }
+        }
+
+        imshow("mask", mask);*/
+
+        
+
         return true;
+        
     }
     try {
             //cvtColor(frame_2, frame2, COLOR_BGR2GRAY);
 
             cv::Mat smoothedFrame;
 
-            smoothedFrame = stab.stabilize(frame_1, new_frame);
+            smoothedFrame = stab.stabilize(frame_1, new_frame, mask);
 
             imshow("Stabilized Video", smoothedFrame);
 
