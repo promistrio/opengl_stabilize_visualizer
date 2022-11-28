@@ -63,9 +63,44 @@ public:
 
         //sws_scale(swsctx, frame->data, frame->linesize, 0, frame->height, frame->data, frame->linesize);
 
-        cv::Mat image(frame->height, frame->width, CV_8UC1, frame->data[0], frame->linesize[0]);
-        //cv::imshow("press ESC to exit", image);
-        setFrame(image);
+        cv::Mat image(frame->height, frame->width, CV_8UC1, frame->data[1], frame->linesize[1]);
+        cv::Mat rgb (frame->height, frame->width, CV_8UC3, cv::Scalar(0,0,0));
+
+        std::cout << ">>>>>>>>> linesize" << frame->linesize[1] << " " << std::endl;
+        for(int j=0;j<rgb.rows;j++)
+        {
+            for(int i=0;i<rgb.cols;i++)
+            {
+                // get pixel
+                cv::Vec3b & color = rgb.at<cv::Vec3b>(j,i);
+
+                
+
+
+                /*int yy = y[(j * rgb.cols) + i];
+                int uu = u[((j / 2) * (rgb.cols / 2)) + (i / 2)];
+                int vv = v[((j / 2) * (rgb.cols / 2)) + (i / 2)];
+
+                r = 1.164 * (yy - 16) + 1.596 * (vv - 128);
+                g = 1.164 * (yy - 16) - 0.813 * (vv - 128) - 0.391 * (uu - 128);
+                b = 1.164 * (yy - 16) + 2.018 * (uu - 128);*/
+
+                // ... do something to the color ....
+                color[0] = 255; //B
+                color[1] = 0; // G
+                color[2] = 0; // R
+
+                // set pixel
+                //image.at<Vec3b>(Point(x,y)) = color;
+                //if you copy value
+            }
+        }
+
+        cv::imshow("press ESC to exit", image);
+        if (cv::waitKey(1) == 0x1b){
+            exit(0);
+        }
+        //setFrame(image);
 
         std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
         std::cout << "Frame duration = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;

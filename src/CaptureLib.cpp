@@ -92,8 +92,8 @@ bool setFrame(Mat new_frame)
             imshow("Stabilized Video", smoothedFrame);
 
             if (cv::waitKey(1) == 0x1b){
-            exit(0);
-        }
+                exit(0);
+            }
 
             frame_1 = new_frame.clone();
     }
