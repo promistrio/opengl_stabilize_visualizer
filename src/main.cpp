@@ -63,40 +63,28 @@ public:
 
         //sws_scale(swsctx, frame->data, frame->linesize, 0, frame->height, frame->data, frame->linesize);
 
-        cv::Mat image(frame->height, frame->width, CV_8UC1, frame->data[1], frame->linesize[1]);
-        cv::Mat rgb (frame->height, frame->width, CV_8UC3, cv::Scalar(0,0,0));
+        cv::Mat imageY(cv::Size(frame->width, frame->height), CV_8UC1, frame->data[0]);
+        cv::Mat imageU(cv::Size(frame->width/2, frame->height / 2), CV_8UC1, frame->data[1]);
+        cv::Mat imageV(cv::Size(frame->width/2, frame->height / 2), CV_8UC1, frame->data[2]);
+        //cv::Mat rgb (frame->height, frame->width, CV_8UC3, cv::Scalar(0,0,0));
 
-        std::cout << ">>>>>>>>> linesize" << frame->linesize[1] << " " << std::endl;
-        for(int j=0;j<rgb.rows;j++)
-        {
-            for(int i=0;i<rgb.cols;i++)
-            {
-                // get pixel
-                cv::Vec3b & color = rgb.at<cv::Vec3b>(j,i);
+        cv::Mat u_resized, v_resized;
+        cv::resize(imageU, u_resized, cv::Size(frame->width, frame->height), 0, 0, cv::INTER_NEAREST); //repeat u values 4 times
+        cv::resize(imageV, v_resized, cv::Size(frame->width, frame->height), 0, 0, cv::INTER_NEAREST);
 
-                
+        cv::Mat yuv;
 
+        std::vector<cv::Mat> yuv_channels = { imageY, u_resized, v_resized };
+        cv::merge(yuv_channels, yuv);
 
-                /*int yy = y[(j * rgb.cols) + i];
-                int uu = u[((j / 2) * (rgb.cols / 2)) + (i / 2)];
-                int vv = v[((j / 2) * (rgb.cols / 2)) + (i / 2)];
+        cv::Mat bgr;
+        cv::cvtColor(yuv, bgr, cv::COLOR_YUV2BGR);
 
-                r = 1.164 * (yy - 16) + 1.596 * (vv - 128);
-                g = 1.164 * (yy - 16) - 0.813 * (vv - 128) - 0.391 * (uu - 128);
-                b = 1.164 * (yy - 16) + 2.018 * (uu - 128);*/
+        /*cv::imshow("Y", imageY);
+        cv::imshow("U", imageU);
+        cv::imshow("V", imageV);*/
+        cv::imshow("BGR", bgr);
 
-                // ... do something to the color ....
-                color[0] = 255; //B
-                color[1] = 0; // G
-                color[2] = 0; // R
-
-                // set pixel
-                //image.at<Vec3b>(Point(x,y)) = color;
-                //if you copy value
-            }
-        }
-
-        cv::imshow("press ESC to exit", image);
         if (cv::waitKey(1) == 0x1b){
             exit(0);
         }
