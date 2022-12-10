@@ -25,6 +25,4 @@ add_executable( CaptureAndStabilize
                 src/videostab.cpp
                 src/CaptureLib.cpp
                 )
-
-                
 target_link_libraries( CaptureAndStabilize ${OpenCV_LIBS} PkgConfig::LIBAV ffmpeg-cpp)

@@ -86,7 +86,6 @@ Mat VideoStab::stabilize(Mat frame_1, Mat frame_2, Mat mask)
 
     imshow ("frame1 cropped", crp1);
     
-    
 
     for (size_t i = 0; i < status.size(); i++)
     {
@@ -159,7 +158,7 @@ Mat VideoStab::stabilize(Mat frame_1, Mat frame_2, Mat mask)
 
     
     
-    warpAffine(frame_1, smoothedFrame, smoothedMat, frame_2.size());
+    //warpAffine(frame_1, smoothedFrame, smoothedMat, frame_2.size());
 
     //Crop the smoothed frame a little to eliminate black region due to Kalman Filter
     //smoothedFrame = smoothedFrame(Range(vert_border, smoothedFrame.rows - vert_border), Range(HORIZONTAL_BORDER_CROP, smoothedFrame.cols - HORIZONTAL_BORDER_CROP));
@@ -182,7 +181,7 @@ Mat VideoStab::stabilize(Mat frame_1, Mat frame_2, Mat mask)
         //imshow("before and after", canvas);
     }*/
 
-    return smoothedFrame;
+    return smoothedMat;
 
 }
 

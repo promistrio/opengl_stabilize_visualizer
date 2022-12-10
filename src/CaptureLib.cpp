@@ -55,6 +55,38 @@ bool InitFrame(cv::Mat _frame1){
     _frame1.copyTo(frame_1);
 }
 
+bool setFrameBGR(cv::Mat gray, cv::Mat bgr){
+    int width = 1920;
+    int height = 1080;
+    if (!is_init){
+        InitFrame(gray);
+        is_init = true;    
+        return true;
+        
+    }
+    try {
+
+            cv::Mat H;
+
+            H = stab.stabilize(frame_1, gray, mask);
+
+            warpAffine(bgr, bgr, H, bgr.size());
+
+            imshow("Stabilized Video", bgr);
+
+            if (cv::waitKey(1) == 0x1b){
+                exit(0);
+            }
+
+            frame_1 = gray.clone();
+    }
+    catch (cv::Exception& e) {
+        *cap >> frame_1;
+    }
+    std::cout << std::endl;
+    return true;
+}
+
 bool setFrame(Mat new_frame)
 {
     int width = 1920;

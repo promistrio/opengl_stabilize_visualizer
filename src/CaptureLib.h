@@ -22,6 +22,8 @@ extern "C" void CaptureLibinit();
 
 extern "C" bool setFrame(cv::Mat frame);
 
+extern "C" bool setFrameBGR(cv::Mat gray, cv::Mat bgr);
+
 // Get the current value in the sequence.
 /*extern "C" CAPTURELIB_API unsigned long long fibonacci_current();
 

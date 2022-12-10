@@ -49,27 +49,13 @@ public:
 	virtual void WriteFrame(int /* streamIndex */, AVFrame* frame, StreamData*  /* streamData */)
 	{
         std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-		//++frameNumber;
-		//printf("saving frame %3d\n", frameNumber);
-		//fflush(stdout);
-
-
-		// write the first channel's color data to a PGM file.
-		// This raw image file can be opened with most image editing programs.
-		//snprintf(fileNameBuffer, sizeof(fileNameBuffer), "frames/pgm-%d.pgm", frameNumber);
-		//pgm_save(frame->data[0], frame->linesize[0],
-		//	frame->width, frame->height, fileNameBuffer);
-
-
-        //sws_scale(swsctx, frame->data, frame->linesize, 0, frame->height, frame->data, frame->linesize);
 
         cv::Mat imageY(cv::Size(frame->width, frame->height), CV_8UC1, frame->data[0]);
         cv::Mat imageU(cv::Size(frame->width/2, frame->height / 2), CV_8UC1, frame->data[1]);
         cv::Mat imageV(cv::Size(frame->width/2, frame->height / 2), CV_8UC1, frame->data[2]);
-        //cv::Mat rgb (frame->height, frame->width, CV_8UC3, cv::Scalar(0,0,0));
 
         cv::Mat u_resized, v_resized;
-        cv::resize(imageU, u_resized, cv::Size(frame->width, frame->height), 0, 0, cv::INTER_NEAREST); //repeat u values 4 times
+        cv::resize(imageU, u_resized, cv::Size(frame->width, frame->height), 0, 0, cv::INTER_NEAREST);
         cv::resize(imageV, v_resized, cv::Size(frame->width, frame->height), 0, 0, cv::INTER_NEAREST);
 
         cv::Mat yuv;
@@ -82,13 +68,13 @@ public:
 
         /*cv::imshow("Y", imageY);
         cv::imshow("U", imageU);
-        cv::imshow("V", imageV);*/
-        cv::imshow("BGR", bgr);
+        cv::imshow("V", imageV);
+        //cv::imshow("BGR", bgr);
 
         if (cv::waitKey(1) == 0x1b){
             exit(0);
-        }
-        //setFrame(image);
+        }*/
+        setFrameBGR(imageY, bgr);
 
         std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
         std::cout << "Frame duration = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
