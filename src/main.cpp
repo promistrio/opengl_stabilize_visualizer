@@ -19,9 +19,10 @@ extern "C"
 // OpenCV
 #include "CaptureLib.h"
 #include <opencv2/core.hpp>
-#include <opencv2/highgui.hpp>
+#include <opencv2/highgui.hpp> 
 
-
+//#include "yuv_gl.hpp"
+#include "yuv_sdl.h"
 #include <iostream>
 
 #include "ffmpegcpp.h"
@@ -38,6 +39,7 @@ public:
 
 	PGMFileSink()
 	{
+        yuvsdl.init();
 	}
 
 	FrameSinkStream* CreateStream()
@@ -48,11 +50,16 @@ public:
 
 	virtual void WriteFrame(int /* streamIndex */, AVFrame* frame, StreamData*  /* streamData */)
 	{
+        yuvsdl.refresh( frame->data[0], 
+                            frame->data[1],
+                            frame->data[2]);
         std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
         cv::Mat imageY(cv::Size(frame->width, frame->height), CV_8UC1, frame->data[0]);
         cv::Mat imageU(cv::Size(frame->width/2, frame->height / 2), CV_8UC1, frame->data[1]);
         cv::Mat imageV(cv::Size(frame->width/2, frame->height / 2), CV_8UC1, frame->data[2]);
+
+        
 
         cv::Mat u_resized, v_resized;
         cv::resize(imageU, u_resized, cv::Size(frame->width, frame->height), 0, 0, cv::INTER_NEAREST);
@@ -97,6 +104,7 @@ public:
 	virtual void Close(int /* streamIndex */)
 	{
 		delete stream;
+        yuvsdl.destruct();
 	}
 
 	virtual bool IsPrimed()
@@ -109,6 +117,7 @@ public:
 	}
 
 private:
+    yuvSDL yuvsdl;
 	char fileNameBuffer[1024];
 	int frameNumber = 0;
 	FrameSinkStream* stream;
@@ -117,6 +126,8 @@ private:
 
 int main()
 {
+    
+    
 	// This example will decode a video stream from a container and output it as raw image data, one image per frame.
 	try
 	{
@@ -137,6 +148,8 @@ int main()
 		{
 			demuxer->Step();
 		}
+
+
 
 		// done
 		delete demuxer;
