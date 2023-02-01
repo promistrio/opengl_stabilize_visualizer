@@ -183,7 +183,8 @@ static SDL_bool InitShaders()
 class yuvSDL{
     public:
         void init();
-        void refresh(GLubyte *YYtex, GLubyte  *UUtex, GLubyte *VVtex);
+        void refreshYUV(GLubyte *YYtex, GLubyte  *UUtex, GLubyte *VVtex);
+        void refreshBRG(GLubyte *BRG);
         void destruct();
 
         //GLuint loadTexture();
@@ -281,7 +282,8 @@ void yuvSDL::init()
 
 
     /* Load the textures. */
-    GLubyte *Ytex,*Utex,*Vtex;
+    GLubyte *Ytex,*Utex,*Vtex, *RGBtex;
+    RGBtex=(GLubyte *) malloc(Ysize*3);
     Ytex=(GLubyte *) malloc(Ysize);
     Utex=(GLubyte *) malloc(Usize);
     Vtex=(GLubyte *) malloc(Vsize);
@@ -290,6 +292,14 @@ void yuvSDL::init()
 
     /* This might not be required, but should not hurt. */
     glEnable(GL_TEXTURE_2D);
+
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_RECTANGLE_NV,4);
+
+    glTexParameteri(GL_TEXTURE_RECTANGLE_NV,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_NV,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+    glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_DECAL);
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,B_WIDTH,B_HEIGHT,0,GL_BGR,GL_UNSIGNED_BYTE,RGBtex);
 
     /* Select texture unit 1 as the active unit and bind the U texture. */
     glActiveTexture(GL_TEXTURE1);
@@ -327,12 +337,12 @@ void yuvSDL::init()
     free(Ytex);
     free(Utex);
     free(Vtex);
+    free(RGBtex);
 }
 
 
-void yuvSDL::refresh(GLubyte *YYtex, GLubyte  *UUtex, GLubyte *VVtex)
+void yuvSDL::refreshYUV(GLubyte *YYtex, GLubyte  *UUtex, GLubyte *VVtex)
 {
-    /* This might not be required, but should not hurt. */
     glEnable(GL_TEXTURE_2D);
 
     /* Select texture unit 1 as the active unit and bind the U texture. */
@@ -395,6 +405,48 @@ void yuvSDL::refresh(GLubyte *YYtex, GLubyte  *UUtex, GLubyte *VVtex)
     glFlush();
     SDL_GL_SwapWindow(window);
 } 
+
+void yuvSDL::refreshBRG(GLubyte *BRG){
+    glUseProgramObjectARB(0);
+    /* Select texture unit 0 as the active unit and bind the Y texture. */
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_2D,4);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+    glTexSubImage2D(GL_TEXTURE_2D,0,0,0,B_WIDTH,B_HEIGHT,GL_BGR,GL_UNSIGNED_BYTE,BRG);
+
+    if(SDL_PollEvent(&evt)) {
+    switch(evt.type) {
+    case  SDL_KEYDOWN:
+    case  SDL_QUIT:
+        Quit=1;
+    break;
+    }
+    }
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);   
+
+    glBegin(GL_QUADS);
+    glTexCoord2i(0,0);
+    glVertex2i(0,0);
+    glTexCoord2i(500,0);
+    glVertex2i(500,0);
+    glTexCoord2i(500,500);
+    glVertex2i(500,500);
+    glTexCoord2i(0,500);
+    glVertex2i(0,500);
+    glEnd();
+
+    /* Flip buffers. */
+
+    glFlush();
+    SDL_GL_SwapWindow(window);
+
+}
 
 void yuvSDL::destruct()
 {

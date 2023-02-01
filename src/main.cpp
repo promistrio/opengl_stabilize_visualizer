@@ -57,10 +57,6 @@ public:
         cv::Mat imageU(cv::Size(frame->width/2, frame->height / 2), CV_8UC1, frame->data[1]);
         cv::Mat imageV(cv::Size(frame->width/2, frame->height / 2), CV_8UC1, frame->data[2]);
 
-        yuvsdl.refresh( frame->data[0], 
-                            frame->data[1],
-                            frame->data[2]);
-
         cv::Mat u_resized, v_resized;
         cv::resize(imageU, u_resized, cv::Size(frame->width, frame->height), 0, 0, cv::INTER_NEAREST);
         cv::resize(imageV, v_resized, cv::Size(frame->width, frame->height), 0, 0, cv::INTER_NEAREST);
@@ -82,6 +78,11 @@ public:
             exit(0);
         }*/
         setFrameBGR(imageY, bgr);
+
+        /*yuvsdl.refreshYUV( imageY.data, 
+                            imageU.data,
+                            imageV.data);*/
+        yuvsdl.refreshBRG(bgr.data);
 
         std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
         std::cout << "Frame duration = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
