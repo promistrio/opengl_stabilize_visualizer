@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.11)
 project(CaptureAndStabilize)
 
-set(OpenGL_GL_PREFERENCE GLVND)
 
 #ffmpeg
 find_package(PkgConfig REQUIRED)

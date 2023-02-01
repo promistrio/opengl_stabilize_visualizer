@@ -50,16 +50,16 @@ public:
 
 	virtual void WriteFrame(int /* streamIndex */, AVFrame* frame, StreamData*  /* streamData */)
 	{
-        yuvsdl.refresh( frame->data[0], 
-                            frame->data[1],
-                            frame->data[2]);
+        
         std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
         cv::Mat imageY(cv::Size(frame->width, frame->height), CV_8UC1, frame->data[0]);
         cv::Mat imageU(cv::Size(frame->width/2, frame->height / 2), CV_8UC1, frame->data[1]);
         cv::Mat imageV(cv::Size(frame->width/2, frame->height / 2), CV_8UC1, frame->data[2]);
 
-        
+        yuvsdl.refresh( frame->data[0], 
+                            frame->data[1],
+                            frame->data[2]);
 
         cv::Mat u_resized, v_resized;
         cv::resize(imageU, u_resized, cv::Size(frame->width, frame->height), 0, 0, cv::INTER_NEAREST);
@@ -124,42 +124,51 @@ private:
 
 };
 
-int main()
+int main(int argc, char *argv[])
 {
+    std::string current_exec_name = argv[0]; // Name of the current exec program
+    std::vector<std::string> all_args;
+
+    if (argc > 1) 
+    {
+        all_args.assign(argv + 1, argv + argc);
+        std::string inputFile = all_args[0];
+        try
+        {
+        
+            
+            // Load this container file so we can extract video from it.
+            std::cout << "Load " << inputFile << std::endl;
+            Demuxer* demuxer = new Demuxer(all_args[0]);//../../samples/big_buck_bunny.mp4
     
-    
-	// This example will decode a video stream from a container and output it as raw image data, one image per frame.
-	try
-	{
-		// Load this container file so we can extract video from it.
-		Demuxer* demuxer = new Demuxer("sony.mpg");//../../samples/big_buck_bunny.mp4
 
-		// Create a file sink that will just output the raw frame data in one PGM file per frame.
-		PGMFileSink* fileSink = new PGMFileSink();
+            // Create a file sink that will just output the raw frame data in one PGM file per frame.
+            PGMFileSink* fileSink = new PGMFileSink();
 
-		// tie the file sink to the best video stream in the input container.
-		demuxer->DecodeBestVideoStream(fileSink);
+            // tie the file sink to the best video stream in the input container.
+            demuxer->DecodeBestVideoStream(fileSink);
 
-		// Prepare the output pipeline. This will push a small amount of frames to the file sink until it IsPrimed returns true.
-		demuxer->PreparePipeline();
+            // Prepare the output pipeline. This will push a small amount of frames to the file sink until it IsPrimed returns true.
+            demuxer->PreparePipeline();
 
-		// Push all the remaining frames through.
-		while (!demuxer->IsDone())
-		{
-			demuxer->Step();
-		}
+            // Push all the remaining frames through.
+            while (!demuxer->IsDone())
+            {
+                demuxer->Step();
+            }
 
 
 
-		// done
-		delete demuxer;
-		delete fileSink;
-	}
-	catch (FFmpegException e)
-	{
-		cerr << "Exception caught!" << endl;
-		throw e;
-	}
+            // done
+            delete demuxer;
+            delete fileSink;
+        }
+        catch (FFmpegException e)
+        {
+            cerr << "Exception caught!" << endl;
+            throw e;
+        }
+    }
 
 	cout << "Decoding complete!" << endl;
 }
