@@ -23,6 +23,7 @@ extern "C"
 
 //#include "yuv_gl.hpp"
 #include "yuv_sdl.h"
+#include "bgr_sdl.hpp"
 #include <iostream>
 
 #include "ffmpegcpp.h"
@@ -39,7 +40,7 @@ public:
 
 	PGMFileSink()
 	{
-        yuvsdl.init();
+        sdl_win.init();
 	}
 
 	FrameSinkStream* CreateStream()
@@ -50,9 +51,10 @@ public:
 
 	virtual void WriteFrame(int /* streamIndex */, AVFrame* frame, StreamData*  /* streamData */)
 	{
-        yuvsdl.refresh( frame->data[0], 
+        /*sdl_win.refresh( frame->data[0], 
                             frame->data[1],
-                            frame->data[2]);
+                            frame->data[2]);*/
+        
         std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
         cv::Mat imageY(cv::Size(frame->width, frame->height), CV_8UC1, frame->data[0]);
@@ -83,6 +85,9 @@ public:
         }*/
         setFrameBGR(imageY, bgr);
 
+        sdl_win.loadTexture (bgr.data);
+        sdl_win.refresh();
+
         std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
         std::cout << "Frame duration = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
 
@@ -104,7 +109,7 @@ public:
 	virtual void Close(int /* streamIndex */)
 	{
 		delete stream;
-        yuvsdl.destruct();
+        sdl_win.destruct();
 	}
 
 	virtual bool IsPrimed()
@@ -117,7 +122,7 @@ public:
 	}
 
 private:
-    yuvSDL yuvsdl;
+    bgrSDL sdl_win;
 	char fileNameBuffer[1024];
 	int frameNumber = 0;
 	FrameSinkStream* stream;
