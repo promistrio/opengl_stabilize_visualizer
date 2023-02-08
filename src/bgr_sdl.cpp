@@ -29,7 +29,7 @@ void bgrSDL::loadTexture(unsigned char * textureData)
     glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_DECAL);
 
     glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, WIN_WIDTH, WIN_HEIGHT, 0, GL_BGR,
-    GL_UNSIGNED_BYTE, &textureData[0] );
+    GL_UNSIGNED_BYTE, textureData );
 
     
 }
@@ -69,26 +69,24 @@ void bgrSDL::refresh()
 
     
 
-    glViewport(0, 0, WIN_WIDTH, WIN_HEIGHT);
-    glClearColor(1.f, 0.f, 1.f, 0.f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0,WIN_WIDTH,0,WIN_HEIGHT,-1,1);
+    glViewport(0,0,WIN_WIDTH,WIN_WIDTH);
+    glHint(GL_POLYGON_SMOOTH_HINT,GL_NICEST);
+    glColor3f(1.0f,1.0f,1.0f);
 
     glEnable(GL_TEXTURE_2D);
-
 
     int width = 1920;
     int height = 1080;
 
     glBegin(GL_QUADS);
     glBindTexture( GL_TEXTURE_2D, this->texture );
-    glTexCoord2i(0,0);
-    glVertex2i(0,0);
-    glTexCoord2i(width,0);
-    glVertex2i(width,0);
-    glTexCoord2i(width,height);
-    glVertex2i(width,height);
-    glTexCoord2i(0,height);
-    glVertex2i(0,height);
+    glTexCoord2f(0,0);          glVertex2i(0,0);
+    glTexCoord2f(1,0);      glVertex2i(width,0);
+    glTexCoord2f(1,1); glVertex2i(width,height);
+    glTexCoord2f(0,1);     glVertex2i(0,height);
     glEnd();
 
     SDL_GL_SwapWindow(this->window);
