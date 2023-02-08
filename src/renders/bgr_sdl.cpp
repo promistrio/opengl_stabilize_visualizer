@@ -1,5 +1,10 @@
 #include "bgr_sdl.hpp"
 #include <iostream>
+#include <chrono>
+#include <thread>
+
+
+using namespace BGRwindow;
 
 void bgrSDL::init()
 {
@@ -7,36 +12,49 @@ void bgrSDL::init()
     SDL_GLContext Context = SDL_GL_CreateContext(this->window);
 }
 
-void bgrSDL::loadTexture(unsigned char * textureData)
+void bgrSDL::updateTexture()
 {
     // if first loading than init texture 
+      glEnable(GL_TEXTURE_2D);
+      if (canLoad)
+      {
+        std::cout << "can load" << std::endl;
+        if (cold_start)
+        {
+          std::cout << "load texture" << std::endl;
+          glGenTextures( 1, &texture );
+          glBindTexture( GL_TEXTURE_2D, texture );
 
-    glEnable(GL_TEXTURE_2D);
+          glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+          glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+          glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_DECAL);
 
-    if (cold_start)
-    {
-    }
+          glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, WIN_WIDTH, WIN_HEIGHT, 0, GL_BGR,
+          GL_UNSIGNED_BYTE, textureData);
+          this->cold_start = false;
+        }
+        else
+        {
+          std::cout << "update texture" << std::endl;
+          glBindTexture( GL_TEXTURE_2D, texture );
 
-    else
-    {
-    }
+          glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+          glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+          glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_DECAL);
 
-    glGenTextures( 1, &this->texture );
-    glBindTexture( GL_TEXTURE_2D, texture );
-
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-    glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_DECAL);
-
-    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, WIN_WIDTH, WIN_HEIGHT, 0, GL_BGR,
-    GL_UNSIGNED_BYTE, textureData );
-
+          glTexSubImage2D(GL_TEXTURE_2D,0,0,0, WIN_WIDTH,WIN_HEIGHT,GL_BGR,GL_UNSIGNED_BYTE,textureData);
+        }
+        canLoad = false;
+        std::cout << "canLoad = false" << std::endl;
+      }
+      this->uploaded_callback();
     
 }
 
 void bgrSDL::refresh()
 {
-     SDL_Event Event;
+    this->updateTexture();
+    SDL_Event Event;
     while (SDL_PollEvent(&Event))
     {
       if (Event.type == SDL_KEYDOWN)
@@ -82,7 +100,7 @@ void bgrSDL::refresh()
     int height = 1080;
 
     glBegin(GL_QUADS);
-    glBindTexture( GL_TEXTURE_2D, this->texture );
+    glBindTexture( GL_TEXTURE_2D, texture );
     glTexCoord2f(0,0); glVertex2i(0,0);
     glTexCoord2f(1,0); glVertex2i(width,0);
     glTexCoord2f(1,1); glVertex2i(width,height);
