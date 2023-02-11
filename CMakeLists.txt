@@ -36,6 +36,7 @@ add_executable( CaptureAndStabilize
                 src/videostab.cpp
                 src/CaptureLib.cpp
                 src/renders/bgr_sdl.cpp
+                src/models/render_status.cpp
                 #src/renders/yuv_gl.cpp
                 )
 target_link_libraries(CaptureAndStabilize ${SDL2_LIBRARIES})

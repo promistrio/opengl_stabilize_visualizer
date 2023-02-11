@@ -1,3 +1,5 @@
+#pragma once
+
 // OpenCV
 #include "CaptureLib.h"
 #include <opencv2/opencv.hpp>
@@ -14,26 +16,20 @@ extern "C"
 #include <libavutil/file.h>
 }
 
+#include "models/render_status.hpp"
+
 #include "ffmpegcpp.h"
 using namespace ffmpegcpp;
 
 namespace StreamCapturer
 {
-    static bool canWrite = true;
-    static cv::Mat bgrtest = cv::Mat(1080, 1920, CV_8UC3, cv::Scalar(94,206,165));
-
-    static void textureLoaded()
-    {
-        canWrite = true;
-    }
 
     class OpenCVFileSink : public VideoFrameSink, public FrameWriter
     {
     public:
-        OpenCVFileSink(std::function<void(unsigned char *)> upd_texture)
+        OpenCVFileSink(RenderStatus & renderstatus):_renderStatus(renderstatus)
         {
-            // void bgrSDL::loadTexture(unsigned char * textureData)
-            this->updateTexture = upd_texture;
+
         }
 
         FrameSinkStream *CreateStream()
@@ -71,15 +67,16 @@ namespace StreamCapturer
             if (cv::waitKey(1) == 0x1b){
                 exit(0);
             }*/
-            cv::cvtColor(yuv, bgr, cv::COLOR_YUV2BGR);
-            setFrameBGR(imageY, bgr);
 
-            if (canWrite)
+            
+            // if render ready to show our texture
+            if (_renderStatus.canPrepareTexture())
             {
-                //std::cout << "canWrite" << std::endl;
-                
-                this->updateTexture(&bgrtest.data[0]);
-                StreamCapturer::canWrite = false;
+                //get pointer on cv::Mat from _renderStatus and change it
+                cv::Mat bgr =  this->_renderStatus.getTextureMat();
+                cv::cvtColor(yuv, bgr, cv::COLOR_YUV2BGR);
+                setFrameBGR(imageY, bgr);
+                this->_renderStatus.textureWasPrepared();
             }
             
 
@@ -106,9 +103,7 @@ namespace StreamCapturer
         int frameNumber = 0;
         FrameSinkStream *stream;
 
-        cv::Mat bgr = cv::Mat(1080, 1920, CV_8UC3, cv::Scalar(94,206,165));
-
-        std::function<void(unsigned char *)> updateTexture;
+        RenderStatus & _renderStatus;
     };
 
 };

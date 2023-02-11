@@ -14,12 +14,14 @@ void bgrSDL::init()
 
 void bgrSDL::updateTexture()
 {
-    // if first loading than init texture 
+    
       glEnable(GL_TEXTURE_2D);
-      if (canLoad)
+      if (this->_renderStatus.canUseTexture() == true)
       {
-        std::cout << "can load" << std::endl;
-        if (cold_start)
+        std::cout << "canUseTexture" << std::endl;
+
+        // if first loading than init texture 
+        if (this->cold_start)
         {
           std::cout << "load texture" << std::endl;
           glGenTextures( 1, &texture );
@@ -30,7 +32,7 @@ void bgrSDL::updateTexture()
           glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_DECAL);
 
           glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, WIN_WIDTH, WIN_HEIGHT, 0, GL_BGR,
-          GL_UNSIGNED_BYTE, textureData);
+          GL_UNSIGNED_BYTE, _renderStatus.getTexturePointer());
           this->cold_start = false;
         }
         else
@@ -42,12 +44,13 @@ void bgrSDL::updateTexture()
           glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
           glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_DECAL);
 
-          glTexSubImage2D(GL_TEXTURE_2D,0,0,0, WIN_WIDTH,WIN_HEIGHT,GL_BGR,GL_UNSIGNED_BYTE,textureData);
+          glTexSubImage2D(GL_TEXTURE_2D,0,0,0, WIN_WIDTH,WIN_HEIGHT,GL_BGR,GL_UNSIGNED_BYTE,_renderStatus.getTexturePointer());
         }
-        canLoad = false;
+
+        //tell ffmpeg process, that it can change texture
         std::cout << "canLoad = false" << std::endl;
       }
-      this->uploaded_callback();
+      _renderStatus.textureWasUsed();
     
 }
 

@@ -9,64 +9,70 @@
 
 
 //#include "yuv_gl.hpp"
-#include "renders/yuv_sdl.h"
 #include "renders/bgr_sdl.hpp"
-#include <iostream>
-#include "opencv_file_sink.h"
+#include "opencv_file_sink.hpp"
+#include "models/render_status.hpp"
 
 using namespace std;
 using namespace ffmpegcpp;
 
-void glWinLoop()
+void glWinLoop(RenderStatus & renderstatus)
 {
+    // init GL Window
+    BGRwindow::bgrSDL sdl_win (renderstatus);
+    sdl_win.init();
     
-
-    //main loop
     while(true)
     {
-        
+        sdl_win.refresh();  
     }
+    sdl_win.destruct();
+}
 
-    
+void glFFmpegLoop(RenderStatus & renderstatus)
+{
+    try
+	{
+        Demuxer* demuxer = new Demuxer("/media/user/Common/data/БП/Вертушки/MP4/2022-06-15_19-45-00_Cam2.mp4");//../../samples/big_buck_bunny.mp4
+        StreamCapturer::OpenCVFileSink* fileSink = new StreamCapturer::OpenCVFileSink(renderstatus);
+        demuxer->DecodeBestVideoStream(fileSink);
+        demuxer->PreparePipeline();    
+
+        while(!demuxer->IsDone())
+        {
+            demuxer->Step();
+        }
+
+        delete demuxer;
+		delete fileSink;
+    }
+    catch (FFmpegException e)
+	{
+		cerr << "Exception caught!" << endl;
+		throw e;
+	}
 }
 
 
 
 int main()
 {    
-	// This example will decode a video stream from a container and output it as raw image data, one image per frame.
-	try
-	{
-        //std::thread glWindow(glWinLoop);
-        // init GL Window
-        BGRwindow::bgrSDL sdl_win (StreamCapturer::textureLoaded);
-        sdl_win.init();
+    RenderStatus renderStatus;
+    std::thread glWindow(glWinLoop, std::ref(renderStatus));
+    std::thread glFFmpeg(glFFmpegLoop, std::ref(renderStatus));
 
-        //init ffmpeg lib
-        Demuxer* demuxer = new Demuxer("I Am Legend - Trailer.mp4");//../../samples/big_buck_bunny.mp4
-        StreamCapturer::OpenCVFileSink* fileSink = new StreamCapturer::OpenCVFileSink(BGRwindow::loadTexture);
-        demuxer->DecodeBestVideoStream(fileSink);
-        demuxer->PreparePipeline();
+    glWindow.join();
+    glFFmpeg.join();
 
-		while (!demuxer->IsDone())
-		{
-			demuxer->Step();
-            sdl_win.refresh();
-		}
+    // This example will decode a video stream from a container and output it as raw image data, one image per frame.
 
-        //sdl_win.loadTexture(bgr.data); callback
-  
-		// done
-        sdl_win.destruct();
-        //glWindow.join();
-		delete demuxer;
-		delete fileSink;
-	}
-	catch (FFmpegException e)
-	{
-		cerr << "Exception caught!" << endl;
-		throw e;
-	}
+    //std::thread glWindow(glWinLoop);
 
+    //sdl_win.loadTexture(bgr.data); callback
+
+    // done
+    
+    //glWindow.join();
+		
 	cout << "Decoding complete!" << endl;
 }
