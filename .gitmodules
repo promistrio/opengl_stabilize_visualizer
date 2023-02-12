@@ -1,6 +1,3 @@
-[submodule "modules/ffmpeg-cpp"]
-	path = modules/ffmpeg-cpp
-	url = git@github.com:promistrio/ffmpeg-cpp3.git
 [submodule "modules/stabilize_lib"]
 	path = modules/stabilize_lib
 	url = git@github.com:promistrio/stabilize_lib.git
