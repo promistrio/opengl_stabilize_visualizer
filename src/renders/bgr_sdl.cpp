@@ -16,7 +16,7 @@ void bgrSDL::updateTexture()
 {
     
       glEnable(GL_TEXTURE_2D);
-      if (this->_renderStatus.canUseTexture() == true)
+      if (canUseTexture() == true)
       {
         std::cout << "canUseTexture" << std::endl;
 
@@ -32,7 +32,7 @@ void bgrSDL::updateTexture()
           glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_DECAL);
 
           glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, WIN_WIDTH, WIN_HEIGHT, 0, GL_BGR,
-          GL_UNSIGNED_BYTE, _renderStatus.getTexturePointer());
+          GL_UNSIGNED_BYTE, getTexturePointer());
           this->cold_start = false;
         }
         else
@@ -44,13 +44,12 @@ void bgrSDL::updateTexture()
           glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
           glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_DECAL);
 
-          glTexSubImage2D(GL_TEXTURE_2D,0,0,0, WIN_WIDTH,WIN_HEIGHT,GL_BGR,GL_UNSIGNED_BYTE,_renderStatus.getTexturePointer());
+          glTexSubImage2D(GL_TEXTURE_2D,0,0,0, WIN_WIDTH,WIN_HEIGHT,GL_BGR,GL_UNSIGNED_BYTE, getTexturePointer());
         }
 
-        //tell ffmpeg process, that it can change texture
-        std::cout << "canLoad = false" << std::endl;
+
       }
-      _renderStatus.textureWasUsed();
+      textureWasUsed();
     
 }
 
@@ -62,29 +61,18 @@ void bgrSDL::refresh()
     {
       if (Event.type == SDL_KEYDOWN)
       {
-        /*switch (Event.key.keysym.sym)
+        switch (Event.key.keysym.sym)
         {
           case SDLK_ESCAPE:
-            Running = 0;
-            break;
-          case 'f':
-            FullScreen = !FullScreen;
-            if (FullScreen)
-            {
-              SDL_SetWindowFullscreen(Window, WindowFlags | SDL_WINDOW_FULLSCREEN_DESKTOP);
-            }
-            else
-            {
-              SDL_SetWindowFullscreen(Window, WindowFlags);
-            }
+            _running = false;
             break;
           default:
             break;
-        }*/
+        }
       }
       else if (Event.type == SDL_QUIT)
       {
-        //Running = 0;
+        _running = false;
       }
     }
 
@@ -104,13 +92,16 @@ void bgrSDL::refresh()
 
     glBegin(GL_QUADS);
     glBindTexture( GL_TEXTURE_2D, texture );
-    glTexCoord2f(0,0); glVertex2i(0,0);
-    glTexCoord2f(1,0); glVertex2i(width,0);
-    glTexCoord2f(1,1); glVertex2i(width,height);
-    glTexCoord2f(0,1); glVertex2i(0,height);
+    glTexCoord2f(1,1); glVertex2i(0,0);
+    glTexCoord2f(0,1); glVertex2i(width,0);
+    glTexCoord2f(0,0); glVertex2i(width,height);
+    glTexCoord2f(1,0); glVertex2i(0,height);
     glEnd();
 
     SDL_GL_SwapWindow(this->window);
+}
+bool bgrSDL::running(){
+  return this->_running;
 }
 void bgrSDL::destruct()
 {

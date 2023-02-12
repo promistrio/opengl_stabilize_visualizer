@@ -3,41 +3,19 @@ project(CaptureAndStabilize)
 
 set(CMAKE_BUILD_TYPE Debug)
 
-
-#ffmpeg
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(LIBAV REQUIRED IMPORTED_TARGET
-    libavdevice
-    libavfilter
-    libavformat
-    libavcodec
-    libswresample
-    libswscale
-    libavutil
-)
-
-add_subdirectory(modules/ffmpeg-cpp)
-
 find_package(SDL2 REQUIRED)
 find_package(OpenGL REQUIRED)
-find_package(OpenCV REQUIRED )
 find_package (Threads)
 
-include_directories( ${OpenCV_INCLUDE_DIRS}
-     "modules/ffmpeg-cpp/sources"   
-)
-include_directories(${SDL2_INCLUDE_DIRS})
-include_directories(${OPENGL_INCLUDE_DIR})
+add_subdirectory(modules/stabilize_lib)
 
+include_directories(${SDL2_INCLUDE_DIRS}
+                    ${OPENGL_INCLUDE_DIR} 
+                    modules/stabilize_lib/src)
 
 add_executable( CaptureAndStabilize 
                 src/main.cpp
-                src/videostab.cpp
-                src/CaptureLib.cpp
                 src/renders/bgr_sdl.cpp
-                src/models/render_status.cpp
                 #src/renders/yuv_gl.cpp
                 )
-target_link_libraries(CaptureAndStabilize ${SDL2_LIBRARIES})
-target_link_libraries(CaptureAndStabilize ${OPENGL_LIBRARIES})
-target_link_libraries(CaptureAndStabilize ${OpenCV_LIBS} PkgConfig::LIBAV ffmpeg-cpp Threads::Threads)
+target_link_libraries(CaptureAndStabilize ${SDL2_LIBRARIES} ${OPENGL_LIBRARIES} Threads::Threads stabilize)
